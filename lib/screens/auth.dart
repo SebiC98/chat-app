@@ -29,8 +29,16 @@ class _AuthScreenState extends State<AuthScreen> {
 
   void _submit() async {
     final isValid = _form.currentState!.validate();
-    if (!isValid || _isLogin && _selectedImage == null) {
+    if (!isValid) {
+      return;
+    }
+    if (!_isLogin && _selectedImage == null) {
       //show error message ...
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please pick an image.'),
+        ),
+      );
       return;
     }
 
@@ -42,9 +50,11 @@ class _AuthScreenState extends State<AuthScreen> {
       if (_isLogin) {
         final userCredentials = await _firebase.signInWithEmailAndPassword(
             email: _enteredEmail, password: _enteredPassword);
+        print('User logged in: ${userCredentials.user!.uid}');
       } else {
         final userCredentials = await _firebase.createUserWithEmailAndPassword(
             email: _enteredEmail, password: _enteredPassword);
+        print('User registered: ${userCredentials.user!.uid}');
 
         final storageRef = FirebaseStorage.instance
             .ref()
@@ -64,13 +74,22 @@ class _AuthScreenState extends State<AuthScreen> {
         });
       }
     } on FirebaseAuthException catch (error) {
-      if (error.code == 'email-already-in-use') {
-        //
-      }
+      print('Error: ${error.code}');
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message ?? 'Authentication failed'),
+        ),
+      );
+      setState(() {
+        _isAuthenticating = false;
+      });
+    } catch (error) {
+      print('Unexpected error: $error');
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unexpected error occurred. Please try again.'),
         ),
       );
       setState(() {
@@ -141,7 +160,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 if (value == null ||
                                     value.isEmpty ||
                                     value.trim().length < 4) {
-                                  return 'Please a enter at least 4 characters';
+                                  return 'Please enter at least 4 characters';
                                 }
                                 return null;
                               },

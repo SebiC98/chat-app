@@ -17,9 +17,9 @@ class UserImagePicker extends StatefulWidget {
 class _UserImagePickerState extends State<UserImagePicker> {
   File? _pickedImageFile;
 
-  void _pickImage() async {
+  void _pickImage(ImageSource source) async {
     final pickedImage = await ImagePicker().pickImage(
-      source: ImageSource.camera,
+      source: source,
       imageQuality: 50,
       maxWidth: 150,
     );
@@ -35,6 +35,33 @@ class _UserImagePickerState extends State<UserImagePicker> {
     widget.onPickImage(_pickedImageFile!);
   }
 
+  void _showImageSourceOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Icon(Icons.camera),
+            title: Text('Take a new photo'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.photo_library),
+            title: Text('Choose from library'),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -46,7 +73,7 @@ class _UserImagePickerState extends State<UserImagePicker> {
               _pickedImageFile != null ? FileImage(_pickedImageFile!) : null,
         ),
         TextButton.icon(
-          onPressed: _pickImage,
+          onPressed: _showImageSourceOptions,
           icon: Icon(Icons.image),
           label: Text(
             'Add Image',
